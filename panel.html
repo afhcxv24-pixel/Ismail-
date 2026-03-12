@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STRAVEX V1 - نظام بوتات Free Fire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* خلفية متحركة */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* شاشة تسجيل الدخول */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: transform 0.5s ease;
+        }
+
+        .login-screen.hidden {
+            transform: translateY(-100%);
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: rgba(20, 20, 35, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #00ffff;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.3); }
+            50% { box-shadow: 0 0 60px rgba(255, 0, 255, 0.5); }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+
+        .stravex-text {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            letter-spacing: 4px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .stravex-text::before {
+            content: '⚡';
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #00ffff;
+            font-size: 24px;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        .stravex-text::after {
+            content: '⚡';
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #ff00ff;
+            font-size: 24px;
+            text-shadow: 0 0 20px #ff00ff;
+        }
+
+        .version {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .version span {
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 5px 15px;
+            border-radius: 50px;
+            border: 1px solid #00ffff;
+        }
+
+        /* زر المطور - ظاهر للجميع */
+        .dev-button {
+            background: linear-gradient(135deg, #ff00ff, #ffaa00);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin: 20px 0;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .dev-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 50px rgba(255, 170, 0, 0.7);
+        }
+
+        .dev-button i {
+            font-size: 20px;
+        }
+
+        /* نافذة المطور المنبثقة - تطلب كود أولاً */
+        .dev-password-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .dev-password-modal.show {
+            display: flex;
+        }
+
+        .dev-password-content {
+            background: rgba(30, 30, 50, 0.98);
+            border: 2px solid #ffaa00;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .dev-password-content h2 {
+            color: #ffaa00;
+            margin-bottom: 20px;
+        }
+
+        .dev-password-content input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #ffaa00;
+            border-radius: 15px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .dev-password-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dev-password-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 15px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .dev-password-submit {
+            background: linear-gradient(135deg, #00ff00, #008000);
+            color: white;
+        }
+
+        .dev-password-cancel {
+            background: linear-gradient(135deg, #ff4444, #ff0000);
+            color: white;
+        }
+
+        /* نافذة المطور الرئيسية */
+        .dev-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .dev-modal.show {
+            display: block;
+        }
+
+        .dev-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(20, 20, 40, 0.98);
+            border: 2px solid #ffaa00;
+            border-radius: 30px;
+            padding: 30px;
+        }
+
+        .dev-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ffaa00;
+        }
+
+        .dev-header h2 {
+            color: #ffaa00;
+            font-size: 28px;
+        }
+
+        .close-dev {
+            background: none;
+            border: none;
+            color: #ffaa00;
+            font-size: 40px;
+            cursor: pointer;
+        }
+
+        /* تبويبات المطور */
+        .dev-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .dev-tab {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dev-tab.active {
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            border-color: transparent;
+        }
+
+        .dev-tab-content {
+            display: none;
+        }
+
+        .dev-tab-content.active {
+            display: block;
+        }
+
+        /* تبويبات المفاتيح */
+        .key-type-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .key-tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .key-tab.active {
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+        }
+
+        .key-tab.personal.active {
+            background: linear-gradient(135deg, #00ff00, #008000);
+        }
+
+        .key-tab.public.active {
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+        }
+
+        .key-form {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* النماذج */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .input-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #00ffff;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .guest-connect-btn {
+            background: linear-gradient(135deg, #00ff00, #008000);
+        }
+
+        .guest-disconnect-btn {
+            background: linear-gradient(135deg, #ff4444, #ff0000);
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .edit-btn {
+            background: linear-gradient(135deg, #ffaa00, #ff6600);
+            margin-top: 10px;
+        }
+
+        .error-message {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff0000;
+            border-radius: 10px;
+            padding: 10px;
+            color: #ff0000;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            padding: 10px;
+            color: #00ff00;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        /* لوحة التحكم */
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        .dashboard.show {
+            display: block;
+        }
+
+        .status-bar {
+            background: rgba(20, 20, 35, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 30px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .key-badge {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            border-radius: 50px;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #ff4444, #ff0000);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+
+        /* إعدادات حساب الضيف */
+        .guest-settings-card {
+            background: rgba(20, 20, 35, 0.8);
+            border: 2px solid #00ff00;
+            border-radius: 30px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .card-header h2 {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+        }
+
+        .guest-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: end;
+        }
+
+        @media (max-width: 768px) {
+            .guest-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* قسم تعديل رسائل الميزات - في لوحة التحكم الرئيسية */
+        .features-messages-section {
+            background: rgba(20, 20, 35, 0.8);
+            border: 2px solid #ff00ff;
+            border-radius: 30px;
+            padding: 25px;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .features-messages-section h3 {
+            color: #ff00ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+        }
+
+        .messages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .message-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #ff00ff;
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .message-card h4 {
+            color: #ff00ff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+
+        .message-content {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #ff00ff;
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            margin-bottom: 15px;
+            word-break: break-word;
+        }
+
+        .edit-message-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ffff;
+            border-radius: 10px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .edit-message-input.show {
+            display: block;
+        }
+
+        .message-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .save-message-btn {
+            background: linear-gradient(135deg, #00ff00, #008000);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .save-message-btn.show {
+            display: inline-block;
+        }
+
+        .cancel-message-btn {
+            background: linear-gradient(135deg, #ff4444, #ff0000);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .cancel-message-btn.show {
+            display: inline-block;
+        }
+
+        .edit-icon {
+            color: #ff00ff;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 16px;
+        }
+
+        .edit-icon:hover {
+            color: #00ffff;
+        }
+
+        /* شبكة البطاقات */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: rgba(20, 20, 35, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 25px;
+        }
+
+        /* قائمة المستخدمين */
+        .users-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .user-item {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid #00ffff;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* الإشعارات */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            z-index: 10001;
+            display: none;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        .keys-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* رسالة الترحيب المخصصة */
+        .welcome-message-card {
+            background: rgba(20, 20, 35, 0.8);
+            border: 2px solid #ffaa00;
+            border-radius: 30px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-message-card h3 {
+            color: #ffaa00;
+            margin-bottom: 15px;
+        }
+
+        .welcome-message-card p {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .owner-name {
+            color: #00ffff;
+            font-weight: 700;
+        }
+
+        /* سجل الطلبات */
+        .logs-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 1px solid #00ffff;
+        }
+
+        .logs-section h3 {
+            color: #00ffff;
+            margin-bottom: 15px;
+        }
+
+        .log-entry {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 5px;
+            color: white;
+            font-size: 14px;
+            border-left: 3px solid #00ffff;
+        }
+
+        .log-time {
+            color: #ff00ff;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .log-success {
+            color: #00ff00;
+        }
+
+        .log-error {
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- شاشة تسجيل الدخول -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="logo">
+                    <div class="stravex-text">STRAVEX</div>
+                    <div class="version">
+                        <span>V1 • نظام البوتات المتقدم</span>
+                    </div>
+                </div>
+
+                <!-- زر المطور - ظاهر للجميع -->
+                <button class="dev-button" onclick="openDevPasswordModal()">
+                    <i class="fas fa-crown"></i>
+                    لوحة المطور (تتطلب كود)
+                </button>
+
+                <!-- تبويب واحد - مفتاح الدخول فقط -->
+                <div style="margin-top: 20px;">
+                    <div class="input-group">
+                        <label><i class="fas fa-key" style="color: #00ffff;"></i> مفتاح الدخول</label>
+                        <input type="text" id="loginKey" placeholder="STRAVEX-XXXX-XXXX-XXXX">
+                    </div>
+
+                    <button class="login-btn" onclick="loginWithKey()">
+                        <i class="fas fa-sign-in-alt"></i> دخول
+                    </button>
+
+                    <div class="error-message" id="loginError"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إدخال كود المطور -->
+    <div class="dev-password-modal" id="devPasswordModal">
+        <div class="dev-password-content">
+            <h2><i class="fas fa-lock"></i> أدخل كود المطور</h2>
+            <input type="password" id="devCode" placeholder="******" maxlength="6">
+            <div class="dev-password-buttons">
+                <button class="dev-password-submit dev-password-btn" onclick="checkDevCode()">دخول</button>
+                <button class="dev-password-cancel dev-password-btn" onclick="closeDevPasswordModal()">إلغاء</button>
+            </div>
+            <div class="error-message" id="devCodeError" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- نافذة المطور (تظهر بعد إدخال الكود الصحيح) -->
+    <div class="dev-modal" id="devModal">
+        <div class="dev-content">
+            <div class="dev-header">
+                <h2><i class="fas fa-crown"></i> لوحة المطور</h2>
+                <button class="close-dev" onclick="closeDevModal()">×</button>
+            </div>
+
+            <!-- تبويبات المطور -->
+            <div class="dev-tabs">
+                <div class="dev-tab active" onclick="switchDevTab('keys')">توليد المفاتيح</div>
+            </div>
+
+            <!-- تبويب توليد المفاتيح -->
+            <div class="dev-tab-content active" id="keysTab">
+                <div class="keys-section">
+                    <div class="key-type-tabs">
+                        <div class="key-tab personal active" onclick="switchKeyTab('personal')">مفاتيح شخصية</div>
+                        <div class="key-tab public" onclick="switchKeyTab('public')">مفاتيح عامة</div>
+                    </div>
+
+                    <div id="personalKeyTab" style="display: block;">
+                        <div class="key-form">
+                            <div class="input-group">
+                                <label>المدة (بالساعات)</label>
+                                <input type="number" id="personalDuration" value="24" min="1">
+                            </div>
+
+                            <div class="input-group">
+                                <label>معرف المستخدم (اختياري)</label>
+                                <input type="text" id="personalUserId" placeholder="اترك فارغاً">
+                            </div>
+
+                            <button class="action-btn" onclick="generatePersonalKey()">
+                                <i class="fas fa-key"></i> توليد مفتاح شخصي
+                            </button>
+
+                            <div id="personalGeneratedKey" class="success-message" style="margin-top: 15px;"></div>
+                        </div>
+                    </div>
+
+                    <div id="publicKeyTab" style="display: none;">
+                        <div class="key-form">
+                            <div class="input-group">
+                                <label>المدة (بالساعات)</label>
+                                <input type="number" id="publicDuration" value="24" min="1">
+                            </div>
+
+                            <div class="input-group">
+                                <label>الحد الأقصى للاستخدامات</label>
+                                <input type="number" id="maxUses" value="10" min="1">
+                            </div>
+
+                            <button class="action-btn" onclick="generatePublicKey()">
+                                <i class="fas fa-users"></i> توليد مفتاح عام
+                            </button>
+
+                            <div id="publicGeneratedKey" class="success-message" style="margin-top: 15px;"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px;">
+                        <h3 style="color: white;">جميع المفاتيح</h3>
+                        <div id="allKeysList" class="keys-list" style="margin-top: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم (نفس الصفحة بعد تسجيل الدخول) -->
+    <div class="dashboard" id="dashboard">
+        <div class="status-bar">
+            <div class="logo" style="cursor: default;">
+                <i class="fas fa-crown"></i>
+                <div class="stravex-text" style="font-size: 24px;">STRAVEX</div>
+            </div>
+            <div class="user-info">
+                <div class="key-badge" id="keyBadge">
+                    <i class="fas fa-key"></i>
+                    <span id="currentKey">-</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> خروج
+                </button>
+            </div>
+        </div>
+
+        <!-- رسالة الترحيب المخصصة -->
+        <div class="welcome-message-card">
+            <h3><i class="fas fa-hand-peace"></i> رسالة الترحيب الحالية</h3>
+            <p id="displayWelcomeMessage">مرحباً بك في بوت STRAVEX V1</p>
+            <p>اسم المالك: <span class="owner-name" id="displayOwnerName">STRAVEX</span></p>
+        </div>
+
+        <!-- إعدادات حساب الضيف -->
+        <div class="guest-settings-card" id="guestSettings">
+            <div class="card-header">
+                <h2><i class="fas fa-user-secret"></i> إعدادات حساب الضيف (البوت)</h2>
+                <span class="badge" id="connectionStatus">غير متصل</span>
+            </div>
+            
+            <div class="guest-form">
+                <div class="input-group">
+                    <label>UID البوت (حساب الضيف)</label>
+                    <input type="text" id="guestUid" placeholder="أدخل UID حساب البوت" value="4589113906">
+                </div>
+
+                <div class="input-group">
+                    <label>كلمة مرور البوت</label>
+                    <input type="password" id="guestPassword" placeholder="كلمة المرور" value="13D433BA6AC2D4E1599FC56E076522B6BD305439F0EA6A16C98802AC9375A382">
+                </div>
+
+                <div>
+                    <button class="action-btn guest-connect-btn" onclick="connectGuestAccount()" id="connectBtn">
+                        <i class="fas fa-plug"></i> تسجيل دخول البوت
+                    </button>
+                    <button class="action-btn guest-disconnect-btn" onclick="disconnectGuestAccount()" id="disconnectBtn" style="display: none;">
+                        <i class="fas fa-power-off"></i> قطع اتصال البوت
+                    </button>
+                </div>
+            </div>
+            <div id="connectionResult" class="success-message" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- بطاقات التحكم الأساسية -->
+        <div class="grid-container">
+            <!-- إرسال طلب صداقة -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-user-plus"></i> إرسال طلب صداقة</h2>
+                    <span class="badge" id="tokenStatus">غير متصل</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>UID اللاعب المستهدف</label>
+                    <input type="text" id="targetUid" placeholder="أدخل UID اللاعب الذي تريد إضافته">
+                </div>
+
+                <div class="input-group">
+                    <label>المدة (أيام)</label>
+                    <select id="duration">
+                        <option value="1">يوم واحد</option>
+                        <option value="7">7 أيام</option>
+                        <option value="30">30 يوم</option>
+                    </select>
+                </div>
+
+                <button class="action-btn" onclick="sendFriendRequest()" id="sendRequestBtn" disabled>
+                    <i class="fas fa-paper-plane"></i> إرسال طلب صداقة
+                </button>
+
+                <div id="requestResult" class="success-message"></div>
+            </div>
+
+            <!-- حذف صديق -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-user-minus"></i> حذف صديق</h2>
+                    <span class="badge">إزالة</span>
+                </div>
+
+                <div class="input-group">
+                    <label>UID الصديق المراد حذفه</label>
+                    <input type="text" id="removeUid" placeholder="أدخل UID الصديق">
+                </div>
+
+                <button class="action-btn" onclick="removeFriend()" id="removeFriendBtn" disabled>
+                    <i class="fas fa-trash"></i> حذف الصديق
+                </button>
+
+                <div id="removeResult" class="success-message"></div>
+            </div>
+        </div>
+
+        <!-- قسم تعديل رسائل الميزات - في لوحة التحكم الرئيسية -->
+        <div class="features-messages-section">
+            <h3><i class="fas fa-edit"></i> تعديل رسائل الميزات</h3>
+            
+            <div class="messages-grid">
+                <!-- رسالة السكواد -->
+                <div class="message-card" id="squadMessageCard">
+                    <h4>
+                        <i class="fas fa-users"></i>
+                        رسالة السكواد
+                        <i class="fas fa-edit edit-icon" onclick="editMessage('squad')"></i>
+                    </h4>
+                    <div class="message-content" id="squadMessageContent">
+                        تم إنشاء السكواد بنجاح. استخدم /join للانضمام
+                    </div>
+                    <input type="text" class="edit-message-input" id="squadMessageInput" value="تم إنشاء السكواد بنجاح. استخدم /join للانضمام">
+                    <div class="message-buttons">
+                        <button class="save-message-btn" onclick="saveMessage('squad')">حفظ</button>
+                        <button class="cancel-message-btn" onclick="cancelEdit('squad')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- رسالة الغرفة -->
+                <div class="message-card" id="roomMessageCard">
+                    <h4>
+                        <i class="fas fa-door-open"></i>
+                        رسالة الغرفة
+                        <i class="fas fa-edit edit-icon" onclick="editMessage('room')"></i>
+                    </h4>
+                    <div class="message-content" id="roomMessageContent">
+                        تم فتح الغرفة. كود الغرفة: {room_code}
+                    </div>
+                    <input type="text" class="edit-message-input" id="roomMessageInput" value="تم فتح الغرفة. كود الغرفة: {room_code}">
+                    <div class="message-buttons">
+                        <button class="save-message-btn" onclick="saveMessage('room')">حفظ</button>
+                        <button class="cancel-message-btn" onclick="cancelEdit('room')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- رسالة الشبح -->
+                <div class="message-card" id="ghostMessageCard">
+                    <h4>
+                        <i class="fas fa-ghost"></i>
+                        رسالة الشبح
+                        <i class="fas fa-edit edit-icon" onclick="editMessage('ghost')"></i>
+                    </h4>
+                    <div class="message-content" id="ghostMessageContent">
+                        تم إرسال الشبح بنجاح إلى الفريق
+                    </div>
+                    <input type="text" class="edit-message-input" id="ghostMessageInput" value="تم إرسال الشبح بنجاح إلى الفريق">
+                    <div class="message-buttons">
+                        <button class="save-message-btn" onclick="saveMessage('ghost')">حفظ</button>
+                        <button class="cancel-message-btn" onclick="cancelEdit('ghost')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- رسالة الرقصة -->
+                <div class="message-card" id="emoteMessageCard">
+                    <h4>
+                        <i class="fas fa-music"></i>
+                        رسالة الرقصة
+                        <i class="fas fa-edit edit-icon" onclick="editMessage('emote')"></i>
+                    </h4>
+                    <div class="message-content" id="emoteMessageContent">
+                        تم إرسال الرقصة بنجاح إلى {player_count} لاعب
+                    </div>
+                    <input type="text" class="edit-message-input" id="emoteMessageInput" value="تم إرسال الرقصة بنجاح إلى {player_count} لاعب">
+                    <div class="message-buttons">
+                        <button class="save-message-btn" onclick="saveMessage('emote')">حفظ</button>
+                        <button class="cancel-message-btn" onclick="cancelEdit('emote')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- رسالة الهجوم -->
+                <div class="message-card" id="attackMessageCard">
+                    <h4>
+                        <i class="fas fa-bolt"></i>
+                        رسالة الهجوم
+                        <i class="fas fa-edit edit-icon" onclick="editMessage('attack')"></i>
+                    </h4>
+                    <div class="message-content" id="attackMessageContent">
+                        بدأ الهجوم على الهدف {target_id}
+                    </div>
+                    <input type="text" class="edit-message-input" id="attackMessageInput" value="بدأ الهجوم على الهدف {target_id}">
+                    <div class="message-buttons">
+                        <button class="save-message-btn" onclick="saveMessage('attack')">حفظ</button>
+                        <button class="cancel-message-btn" onclick="cancelEdit('attack')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- رسالة الخطأ -->
+                <div class="message-card" id="errorMessageCard">
+                    <h4>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        رسالة الخطأ
+                        <i class="fas fa-edit edit-icon" onclick="editMessage('error')"></i>
+                    </h4>
+                    <div class="message-content" id="errorMessageContent">
+                        ❌ حدث خطأ. الرجاء المحاولة مرة أخرى.
+                    </div>
+                    <input type="text" class="edit-message-input" id="errorMessageInput" value="❌ حدث خطأ. الرجاء المحاولة مرة أخرى.">
+                    <div class="message-buttons">
+                        <button class="save-message-btn" onclick="saveMessage('error')">حفظ</button>
+                        <button class="cancel-message-btn" onclick="cancelEdit('error')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- رسالة النجاح -->
+                <div class="message-card" id="successMessageCard">
+                    <h4>
+                        <i class="fas fa-check-circle"></i>
+                        رسالة النجاح
+                        <i class="fas fa-edit edit-icon" onclick="editMessage('success')"></i>
+                    </h4>
+                    <div class="message-content" id="successMessageContent">
+                        ✅ تمت العملية بنجاح!
+                    </div>
+                    <input type="text" class="edit-message-input" id="successMessageInput" value="✅ تمت العملية بنجاح!">
+                    <div class="message-buttons">
+                        <button class="save-message-btn" onclick="saveMessage('success')">حفظ</button>
+                        <button class="cancel-message-btn" onclick="cancelEdit('success')">إلغاء</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قائمة الأصدقاء -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2><i class="fas fa-users"></i> قائمة الأصدقاء (اللاعبين المضافين)</h2>
+                <span class="badge" id="friendsCount">0</span>
+            </div>
+
+            <div class="users-list" id="friendsList">
+                <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px;">
+                    <i class="fas fa-inbox" style="font-size: 50px;"></i>
+                    <p>لا يوجد أصدقاء مضافين</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- سجل الطلبات -->
+        <div class="logs-section">
+            <h3><i class="fas fa-history"></i> سجل طلبات الصداقة</h3>
+            <div id="requestLogs" class="users-list" style="max-height: 200px;">
+                <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
+                    لا توجد طلبات بعد
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإشعار -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // ===============================================
+        // كود المطور الصحيح
+        // ===============================================
+        const DEV_CODE = "20070";
+
+        // ===============================================
+        // المتغيرات العامة
+        // ===============================================
+        let JWT_TOKEN = null;
+        let friends = JSON.parse(localStorage.getItem('stravex_friends')) || {};
+        let keys = JSON.parse(localStorage.getItem('stravex_keys')) || {};
+        let currentKey = null;
+        let guestConnected = false;
+        let currentGuestUid = null;
+        let requestLogs = JSON.parse(localStorage.getItem('stravex_logs')) || [];
+
+        // رسائل الميزات (من السورسات)
+        let featureMessages = JSON.parse(localStorage.getItem('stravex_feature_messages')) || {
+            squad: "تم إنشاء السكواد بنجاح. استخدم /join للانضمام",
+            room: "تم فتح الغرفة. كود الغرفة: {room_code}",
+            ghost: "تم إرسال الشبح بنجاح إلى الفريق",
+            emote: "تم إرسال الرقصة بنجاح إلى {player_count} لاعب",
+            attack: "بدأ الهجوم على الهدف {target_id}",
+            error: "❌ حدث خطأ. الرجاء المحاولة مرة أخرى.",
+            success: "✅ تمت العملية بنجاح!",
+            welcome: "مرحباً بك في بوت STRAVEX V1",
+            owner: "STRAVEX"
+        };
+
+        // تحميل البيانات
+        window.onload = function() {
+            loadFriends();
+            loadKeysList();
+            loadFeatureMessages();
+            loadLogs();
+        };
+
+        // ===============================================
+        // دوال رسائل الميزات
+        // ===============================================
+        function loadFeatureMessages() {
+            // تحميل جميع الرسائل
+            if (document.getElementById('squadMessageContent')) {
+                document.getElementById('squadMessageContent').textContent = featureMessages.squad;
+                document.getElementById('squadMessageInput').value = featureMessages.squad;
+            }
+            
+            if (document.getElementById('roomMessageContent')) {
+                document.getElementById('roomMessageContent').textContent = featureMessages.room;
+                document.getElementById('roomMessageInput').value = featureMessages.room;
+            }
+            
+            if (document.getElementById('ghostMessageContent')) {
+                document.getElementById('ghostMessageContent').textContent = featureMessages.ghost;
+                document.getElementById('ghostMessageInput').value = featureMessages.ghost;
+            }
+            
+            if (document.getElementById('emoteMessageContent')) {
+                document.getElementById('emoteMessageContent').textContent = featureMessages.emote;
+                document.getElementById('emoteMessageInput').value = featureMessages.emote;
+            }
+            
+            if (document.getElementById('attackMessageContent')) {
+                document.getElementById('attackMessageContent').textContent = featureMessages.attack;
+                document.getElementById('attackMessageInput').value = featureMessages.attack;
+            }
+            
+            if (document.getElementById('errorMessageContent')) {
+                document.getElementById('errorMessageContent').textContent = featureMessages.error;
+                document.getElementById('errorMessageInput').value = featureMessages.error;
+            }
+            
+            if (document.getElementById('successMessageContent')) {
+                document.getElementById('successMessageContent').textContent = featureMessages.success;
+                document.getElementById('successMessageInput').value = featureMessages.success;
+            }
+            
+            if (document.getElementById('displayWelcomeMessage')) {
+                document.getElementById('displayWelcomeMessage').textContent = featureMessages.welcome;
+            }
+            
+            if (document.getElementById('displayOwnerName')) {
+                document.getElementById('displayOwnerName').textContent = featureMessages.owner;
+            }
+        }
+
+        function editMessage(type) {
+            // إخفاء المحتوى وإظهار حقل الإدخال
+            document.getElementById(type + 'MessageContent').style.display = 'none';
+            document.getElementById(type + 'MessageInput').classList.add('show');
+            
+            // إظهار أزرار الحفظ والإلغاء
+            document.querySelectorAll(`#${type}MessageCard .save-message-btn, #${type}MessageCard .cancel-message-btn`).forEach(btn => {
+                btn.classList.add('show');
+            });
+        }
+
+        function saveMessage(type) {
+            const input = document.getElementById(type + 'MessageInput');
+            const newMessage = input.value;
+            
+            // حفظ في localStorage
+            featureMessages[type] = newMessage;
+            localStorage.setItem('stravex_feature_messages', JSON.stringify(featureMessages));
+            
+            // تحديث العرض
+            document.getElementById(type + 'MessageContent').textContent = newMessage;
+            
+            // إذا كانت رسالة الترحيب أو اسم المالك، تحديثها في المكان المخصص
+            if (type === 'welcome' && document.getElementById('displayWelcomeMessage')) {
+                document.getElementById('displayWelcomeMessage').textContent = newMessage;
+            }
+            if (type === 'owner' && document.getElementById('displayOwnerName')) {
+                document.getElementById('displayOwnerName').textContent = newMessage;
+            }
+            
+            // إعادة الحالة
+            document.getElementById(type + 'MessageContent').style.display = 'block';
+            document.getElementById(type + 'MessageInput').classList.remove('show');
+            document.querySelectorAll(`#${type}MessageCard .save-message-btn, #${type}MessageCard .cancel-message-btn`).forEach(btn => {
+                btn.classList.remove('show');
+            });
+            
+            showNotification('✅ تم حفظ الرسالة بنجاح');
+        }
+
+        function cancelEdit(type) {
+            document.getElementById(type + 'MessageContent').style.display = 'block';
+            document.getElementById(type + 'MessageInput').classList.remove('show');
+            document.querySelectorAll(`#${type}MessageCard .save-message-btn, #${type}MessageCard .cancel-message-btn`).forEach(btn => {
+                btn.classList.remove('show');
+            });
+            
+            // إعادة القيمة الأصلية
+            document.getElementById(type + 'MessageInput').value = featureMessages[type];
+        }
+
+        // ===============================================
+        // دوال المطور - فتح نافذة إدخال الكود
+        // ===============================================
+        function openDevPasswordModal() {
+            document.getElementById('devPasswordModal').classList.add('show');
+            document.getElementById('devCode').value = '';
+            document.getElementById('devCodeError').classList.remove('show');
+        }
+
+        function closeDevPasswordModal() {
+            document.getElementById('devPasswordModal').classList.remove('show');
+        }
+
+        function checkDevCode() {
+            const enteredCode = document.getElementById('devCode').value;
+            
+            if (enteredCode === DEV_CODE) {
+                closeDevPasswordModal();
+                openDevModal();
+            } else {
+                const errorDiv = document.getElementById('devCodeError');
+                errorDiv.textContent = '❌ كود المطور غير صحيح';
+                errorDiv.classList.add('show');
+            }
+        }
+
+        function openDevModal() {
+            document.getElementById('devModal').classList.add('show');
+            loadKeysList();
+        }
+
+        function closeDevModal() {
+            document.getElementById('devModal').classList.remove('show');
+        }
+
+        function switchDevTab(tab) {
+            const tabs = document.querySelectorAll('.dev-tab');
+            const contents = document.querySelectorAll('.dev-tab-content');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'keys') {
+                tabs[0].classList.add('active');
+                document.getElementById('keysTab').classList.add('active');
+            }
+        }
+
+        // ===============================================
+        // دوال المفاتيح
+        // ===============================================
+        function switchKeyTab(tab) {
+            const personalTab = document.querySelector('.key-tab.personal');
+            const publicTab = document.querySelector('.key-tab.public');
+            const personalContent = document.getElementById('personalKeyTab');
+            const publicContent = document.getElementById('publicKeyTab');
+
+            if (tab === 'personal') {
+                personalTab.classList.add('active');
+                publicTab.classList.remove('active');
+                personalContent.style.display = 'block';
+                publicContent.style.display = 'none';
+            } else {
+                publicTab.classList.add('active');
+                personalTab.classList.remove('active');
+                publicContent.style.display = 'block';
+                personalContent.style.display = 'none';
+            }
+        }
+
+        function generateKeyString() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let segments = [];
+            for (let i = 0; i < 3; i++) {
+                let seg = '';
+                for (let j = 0; j < 4; j++) {
+                    seg += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                segments.push(seg);
+            }
+            return `STRAVEX-${segments[0]}-${segments[1]}-${segments[2]}`;
+        }
+
+        function generatePersonalKey() {
+            const duration = parseInt(document.getElementById('personalDuration').value);
+            const userId = document.getElementById('personalUserId').value.trim();
+
+            const key = generateKeyString();
+            const expiresAt = Date.now() + (duration * 60 * 60 * 1000);
+
+            keys[key] = {
+                type: 'personal',
+                used: false,
+                used_by: userId || null,
+                created_at: Date.now(),
+                expires_at: expiresAt,
+                duration: duration
+            };
+
+            localStorage.setItem('stravex_keys', JSON.stringify(keys));
+
+            document.getElementById('personalGeneratedKey').innerHTML = `
+                ✅ تم توليد المفتاح بنجاح<br>
+                <span style="font-size: 18px;">${key}</span><br>
+                ⏳ المدة: ${duration} ساعة
+                ${userId ? `<br>👤 مخصص لـ: ${userId}` : ''}
+            `;
+            document.getElementById('personalGeneratedKey').classList.add('show');
+
+            loadKeysList();
+        }
+
+        function generatePublicKey() {
+            const duration = parseInt(document.getElementById('publicDuration').value);
+            const maxUses = parseInt(document.getElementById('maxUses').value);
+
+            const key = generateKeyString();
+            const expiresAt = Date.now() + (duration * 60 * 60 * 1000);
+
+            keys[key] = {
+                type: 'public',
+                used: false,
+                uses_count: 0,
+                max_uses: maxUses,
+                created_at: Date.now(),
+                expires_at: expiresAt,
+                duration: duration
+            };
+
+            localStorage.setItem('stravex_keys', JSON.stringify(keys));
+
+            document.getElementById('publicGeneratedKey').innerHTML = `
+                ✅ تم توليد المفتاح العام بنجاح<br>
+                <span style="font-size: 18px;">${key}</span><br>
+                ⏳ المدة: ${duration} ساعة<br>
+                👥 الحد الأقصى: ${maxUses} استخدام
+            `;
+            document.getElementById('publicGeneratedKey').classList.add('show');
+
+            loadKeysList();
+        }
+
+        function loadKeysList() {
+            const keysList = document.getElementById('allKeysList');
+            if (!keysList) return;
+
+            if (Object.keys(keys).length === 0) {
+                keysList.innerHTML = '<p style="color: rgba(255,255,255,0.5);">لا توجد مفاتيح</p>';
+                return;
+            }
+
+            let html = '';
+            Object.entries(keys).forEach(([key, data]) => {
+                const expired = Date.now() > data.expires_at;
+                const status = data.used ? '🔴 مستخدم' : (expired ? '🟡 منتهي' : '🟢 متاح');
+                const typeText = data.type === 'personal' ? 'شخصي' : 'عام';
+                
+                html += `
+                    <div class="user-item" style="flex-direction: column; align-items: flex-start;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <span style="color: #00ffff;">${key}</span>
+                            <span style="color: ${expired ? '#ffff00' : (data.used ? '#ff4444' : '#00ff00')}">${status}</span>
+                        </div>
+                        <div style="color: rgba(255,255,255,0.5); font-size: 12px;">
+                            📌 ${typeText} | ⏳ ${data.duration} ساعة
+                            ${data.used_by ? ` | 👤 ${data.used_by}` : ''}
+                            ${data.max_uses ? ` | 👥 ${data.uses_count || 0}/${data.max_uses}` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            keysList.innerHTML = html;
+        }
+
+        // ===============================================
+        // دوال تسجيل الدخول
+        // ===============================================
+        function loginWithKey() {
+            const key = document.getElementById('loginKey').value.trim().toUpperCase();
+            
+            if (!key) {
+                showError('الرجاء إدخال المفتاح');
+                return;
+            }
+
+            if (keys[key]) {
+                if (keys[key].used) {
+                    showError('هذا المفتاح مستخدم مسبقاً');
+                    return;
+                }
+                if (Date.now() > keys[key].expires_at) {
+                    showError('انتهت صلاحية هذا المفتاح');
+                    return;
+                }
+
+                keys[key].used = true;
+                keys[key].used_at = Date.now();
+                localStorage.setItem('stravex_keys', JSON.stringify(keys));
+
+                currentKey = key;
+                document.getElementById('currentKey').textContent = key.substring(0, 16) + '...';
+                
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('dashboard').classList.add('show');
+                showNotification('✅ تم تسجيل الدخول بنجاح');
+            } else {
+                showError('مفتاح غير صحيح');
+            }
+        }
+
+        function logout() {
+            if (guestConnected) {
+                disconnectGuestAccount();
+            }
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboard').classList.remove('show');
+            showNotification('👋 تم تسجيل الخروج');
+        }
+
+        // ===============================================
+        // دوال حساب الضيف (تسجيل دخول البوت)
+        // ===============================================
+        function connectGuestAccount() {
+            const uid = document.getElementById('guestUid').value.trim();
+            const password = document.getElementById('guestPassword').value.trim();
+
+            if (!uid || !password) {
+                showNotification('❌ الرجاء إدخال UID وكلمة المرور لحساب البوت');
+                return;
+            }
+
+            showNotification('🔄 جاري تسجيل دخول البوت...');
+
+            // محاكاة تسجيل الدخول إلى Garena
+            setTimeout(() => {
+                JWT_TOKEN = "jwt_token_" + Date.now();
+                guestConnected = true;
+                currentGuestUid = uid;
+                
+                document.getElementById('connectionStatus').textContent = 'البوت متصل';
+                document.getElementById('connectionStatus').style.color = '#00ff00';
+                document.getElementById('connectBtn').style.display = 'none';
+                document.getElementById('disconnectBtn').style.display = 'block';
+                document.getElementById('sendRequestBtn').disabled = false;
+                document.getElementById('removeFriendBtn').disabled = false;
+                document.getElementById('tokenStatus').textContent = 'البوت متصل';
+                document.getElementById('tokenStatus').style.color = '#00ff00';
+                
+                document.getElementById('connectionResult').innerHTML = `✅ تم تسجيل دخول البوت بنجاح (UID: ${uid})`;
+                document.getElementById('connectionResult').classList.add('show');
+                setTimeout(() => document.getElementById('connectionResult').classList.remove('show'), 3000);
+                
+                // تسجيل في السجل
+                addLog('system', `تم تسجيل دخول البوت ${uid}`, true);
+                
+                showNotification('✅ تم تسجيل دخول البوت');
+            }, 2000);
+        }
+
+        function disconnectGuestAccount() {
+            JWT_TOKEN = null;
+            guestConnected = false;
+            currentGuestUid = null;
+            
+            document.getElementById('connectionStatus').textContent = 'غير متصل';
+            document.getElementById('connectionStatus').style.color = '#ff4444';
+            document.getElementById('connectBtn').style.display = 'block';
+            document.getElementById('disconnectBtn').style.display = 'none';
+            document.getElementById('sendRequestBtn').disabled = true;
+            document.getElementById('removeFriendBtn').disabled = true;
+            document.getElementById('tokenStatus').textContent = 'غير متصل';
+            document.getElementById('tokenStatus').style.color = '#ff4444';
+            
+            addLog('system', 'تم قطع اتصال البوت', true);
+            
+            showNotification('👋 تم قطع اتصال البوت');
+        }
+
+        // ===============================================
+        // دوال الصداقات
+        // ===============================================
+        function sendFriendRequest() {
+            const targetId = document.getElementById('targetUid').value.trim();
+            const duration = parseInt(document.getElementById('duration').value);
+
+            if (!targetId) {
+                showNotification('❌ الرجاء إدخال UID اللاعب المستهدف');
+                return;
+            }
+
+            if (!JWT_TOKEN || !guestConnected) {
+                showNotification('❌ البوت غير متصل. الرجاء تسجيل دخول البوت أولاً');
+                return;
+            }
+
+            if (targetId === currentGuestUid) {
+                showNotification('❌ لا يمكن إرسال طلب صداقة إلى نفس حساب البوت');
+                return;
+            }
+
+            showNotification('🔄 جاري إرسال طلب الصداقة...');
+
+            setTimeout(() => {
+                const success = Math.random() > 0.2;
+                
+                if (success) {
+                    const names = ['STRAVEX_King', 'FireMaster', 'DragonSlayer', 'ProGamer', 'LegendFF', 'ShadowHunter', 'NightKing'];
+                    const name = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 1000);
+                    
+                    const expiry = Date.now() + (duration * 24 * 60 * 60 * 1000);
+                    
+                    friends[targetId] = {
+                        name: name,
+                        region: 'ME',
+                        level: Math.floor(Math.random() * 70) + 20,
+                        expiry: expiry,
+                        added_at: Date.now(),
+                        added_by_bot: currentGuestUid
+                    };
+                    
+                    localStorage.setItem('stravex_friends', JSON.stringify(friends));
+                    
+                    // استخدام رسالة النجاح من الميزات
+                    document.getElementById('requestResult').innerHTML = featureMessages.success + ` (${name} - ${targetId})`;
+                    document.getElementById('requestResult').classList.add('show');
+                    setTimeout(() => document.getElementById('requestResult').classList.remove('show'), 5000);
+                    
+                    loadFriends();
+                    addLog(targetId, `✅ تم إرسال طلب صداقة إلى ${name}`, true);
+                    showNotification(featureMessages.success);
+                } else {
+                    // استخدام رسالة الخطأ من الميزات
+                    document.getElementById('requestResult').innerHTML = featureMessages.error;
+                    document.getElementById('requestResult').classList.add('show');
+                    setTimeout(() => document.getElementById('requestResult').classList.remove('show'), 5000);
+                    
+                    addLog(targetId, '❌ فشل إرسال طلب الصداقة', false);
+                    showNotification(featureMessages.error);
+                }
+                
+                document.getElementById('targetUid').value = '';
+            }, 2000);
+        }
+
+        function removeFriend() {
+            const targetId = document.getElementById('removeUid').value.trim();
+
+            if (!targetId) {
+                showNotification('❌ الرجاء إدخال UID الصديق المراد حذفه');
+                return;
+            }
+
+            if (!JWT_TOKEN || !guestConnected) {
+                showNotification('❌ البوت غير متصل');
+                return;
+            }
+
+            if (!friends[targetId]) {
+                showNotification('❌ هذا اللاعب ليس في قائمة الأصدقاء');
+                return;
+            }
+
+            const name = friends[targetId].name;
+            delete friends[targetId];
+            localStorage.setItem('stravex_friends', JSON.stringify(friends));
+            
+            document.getElementById('removeResult').innerHTML = featureMessages.success + ` (تم حذف ${name})`;
+            document.getElementById('removeResult').classList.add('show');
+            setTimeout(() => document.getElementById('removeResult').classList.remove('show'), 3000);
+            
+            loadFriends();
+            addLog(targetId, `✅ تم حذف الصديق ${name}`, true);
+            showNotification(featureMessages.success);
+            document.getElementById('removeUid').value = '';
+        }
+
+        function loadFriends() {
+            const list = document.getElementById('friendsList');
+            const count = document.getElementById('friendsCount');
+            
+            if (!list || !count) return;
+            
+            const entries = Object.entries(friends);
+            count.textContent = entries.length;
+
+            if (entries.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px;"><i class="fas fa-inbox" style="font-size: 50px;"></i><p>لا يوجد أصدقاء</p></div>';
+                return;
+            }
+
+            let html = '';
+            entries.forEach(([uid, data]) => {
+                const remaining = Math.ceil((data.expiry - Date.now()) / (1000 * 60 * 60 * 24));
+                html += `
+                    <div class="user-item">
+                        <div>
+                            <div style="color: white;">${data.name}</div>
+                            <div style="color: #00ffff;">${uid}</div>
+                            <div style="color: rgba(255,255,255,0.5);">مستوى ${data.level} | متبقي ${remaining} يوم</div>
+                            <div style="color: #ff00ff; font-size: 12px;">تمت الإضافة بواسطة البوت: ${data.added_by_bot}</div>
+                        </div>
+                        <button onclick="quickRemove('${uid}')" style="background: none; border: none; color: #ff4444; cursor: pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        function quickRemove(uid) {
+            if (confirm('هل أنت متأكد من حذف هذا الصديق؟')) {
+                const name = friends[uid].name;
+                delete friends[uid];
+                localStorage.setItem('stravex_friends', JSON.stringify(friends));
+                loadFriends();
+                addLog(uid, `✅ تم حذف الصديق ${name}`, true);
+                showNotification(featureMessages.success);
+            }
+        }
+
+        // ===============================================
+        // دوال السجلات
+        // ===============================================
+        function addLog(targetId, message, success) {
+            const logEntry = {
+                id: targetId,
+                message: message,
+                success: success,
+                time: new Date().toLocaleString('ar-EG'),
+                bot: currentGuestUid || 'غير معروف'
+            };
+            
+            requestLogs.unshift(logEntry);
+            if (requestLogs.length > 50) requestLogs.pop();
+            
+            localStorage.setItem('stravex_logs', JSON.stringify(requestLogs));
+            loadLogs();
+        }
+
+        function loadLogs() {
+            const logsDiv = document.getElementById('requestLogs');
+            if (!logsDiv) return;
+            
+            if (requestLogs.length === 0) {
+                logsDiv.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">لا توجد طلبات بعد</div>';
+                return;
+            }
+            
+            let html = '';
+            requestLogs.slice(0, 20).forEach(log => {
+                const statusClass = log.success ? 'log-success' : 'log-error';
+                html += `
+                    <div class="log-entry">
+                        <span class="log-time">${log.time}</span>
+                        <span class="${statusClass}">${log.message}</span>
+                        <div style="font-size: 11px; color: #ff00ff;">البوت: ${log.bot}</div>
+                    </div>
+                `;
+            });
+            
+            logsDiv.innerHTML = html;
+        }
+
+        // ===============================================
+        // دوال مساعدة
+        // ===============================================
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.textContent = `❌ ${message}`;
+                errorDiv.classList.add('show');
+                setTimeout(() => errorDiv.classList.remove('show'), 3000);
+            }
+        }
+
+        function showNotification(message) {
+            const notif = document.getElementById('notification');
+            if (notif) {
+                notif.textContent = message;
+                notif.classList.add('show');
+                setTimeout(() => notif.classList.remove('show'), 3000);
+            }
+        }
+    </script>
+</body>
+</html>
